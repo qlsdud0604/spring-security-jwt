@@ -1,11 +1,14 @@
 package com.example.springsecurityjwt.config;
 
+import com.example.springsecurityjwt.filter.MyFilter01;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.annotation.web.configuration.WebSecurityConfigurerAdapter;
 import org.springframework.security.config.http.SessionCreationPolicy;
+import org.springframework.security.web.authentication.www.BasicAuthenticationFilter;
+import org.springframework.security.web.context.SecurityContextPersistenceFilter;
 import org.springframework.web.filter.CorsFilter;
 
 @Configuration
@@ -17,7 +20,11 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
 
     @Override
     protected void configure(HttpSecurity http) throws Exception {
+
+        http.addFilterAfter(new MyFilter01(), SecurityContextPersistenceFilter.class);
+
         http.csrf().disable();
+
         http.sessionManagement().sessionCreationPolicy(SessionCreationPolicy.STATELESS)   // 세션을 사용하지 않겠다는 설정
                 .and()
                 .addFilter(corsFilter)   // corsFilter 등록(인증이 필요한 요청도 허용) <-> @CrossOrigin은 인증이 필요없는 요청만 허용
@@ -28,7 +35,7 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
                 .antMatchers("/api/v1/manager/**").access("hasRole('ROLE_MANAGER') or hasRole('ROLE_ADMIN')")
                 .antMatchers("/api/v1/admin/**").access(" hasRole('ROLE_ADMIN')")
                 .anyRequest().permitAll();
-
-
     }
 }
+
+
