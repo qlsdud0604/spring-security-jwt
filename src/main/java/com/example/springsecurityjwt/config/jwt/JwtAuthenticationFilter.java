@@ -1,13 +1,20 @@
 package com.example.springsecurityjwt.config.jwt;
 
+import com.example.springsecurityjwt.config.auth.PrincipalDetails;
+import com.example.springsecurityjwt.model.User;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.authentication.AuthenticationManager;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.AuthenticationException;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 
+import javax.servlet.FilterChain;
+import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
+import java.io.IOException;
 
 @RequiredArgsConstructor
 public class JwtAuthenticationFilter extends UsernamePasswordAuthenticationFilter {
@@ -17,17 +24,41 @@ public class JwtAuthenticationFilter extends UsernamePasswordAuthenticationFilte
     @Override
     /** /login 요청을 하면 로그인 시도를 위해서 실행되는 함수 */
     public Authentication attemptAuthentication(HttpServletRequest request, HttpServletResponse response) throws AuthenticationException {
-        System.out.println("JwtAuthenticationFilter 로그인 시도 중");
+        System.out.println("==========JwtAuthenticationFilter 로그인 시도 중==========");
 
-        // 1. username, password를 받음
+        try {
+            /* JSON 데이터를 전달받고 User 객체로 매핑 */
+            ObjectMapper mapper = new ObjectMapper();
+            User user = mapper.readValue(request.getInputStream(), User.class);
+            System.out.println("1. User 객체 매핑 완료 : " + user);
 
-        // 2. authenticationManager를 통해서 로그인 시도를 하면, PrincipalDetailsService가 호출되고 loadUserByUsername( ) 메서드 실행됨
+            /* User의 username과 password로 토큰 생성*/
+            UsernamePasswordAuthenticationToken authenticationToken = new UsernamePasswordAuthenticationToken(user.getUsername(), user.getPassword());
+            System.out.println("2. 토큰 생성 완료");
 
-        // 3. loadUserByUsername( ) 메서드에 의해서 반환되는 PrincipalDetails를 세션에 담음
 
-        // 4. JWT를 만들어 응답을 해주면 됨
+            /* 토큰의 username을 통해 authenticationManager를 통해서 로그인 시도를 하면 PrincipalDetailsService의 loadUserByUsername() 메서드가 자동으로 실행 */
+            Authentication authentication = authenticationManager.authenticate(authenticationToken);
 
-        return super.attemptAuthentication(request, response);
+            /* loadUserByUsername( ) 메서드가 정상적으로 실행되면 Authentication 객체가 리턴됨(DB에 있는 username과 password가 일치한다는 의미) */
+            PrincipalDetails principalDetails = (PrincipalDetails) authentication.getPrincipal();
+            System.out.println("3. 로그인 완료 : " + principalDetails.getUser().getUsername() + " " + principalDetails.getUser().getPassword());
+
+            /* Authentication 객체가 리턴되면 session 영역에 저장됨 */
+            return authentication;
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+
+        return null;
+    }
+
+    @Override
+    /** attemptAuthentication() 함수 실행 후 인증이 정상적으로 되었으면 실행되는 함수 */
+    protected void successfulAuthentication(HttpServletRequest request, HttpServletResponse response, FilterChain chain, Authentication authResult) throws IOException, ServletException {
+        System.out.println("4. 인증 완료");
+
+        super.successfulAuthentication(request, response, chain, authResult);
     }
 }
 
