@@ -1,5 +1,7 @@
 package com.example.springsecurityjwt.config.jwt;
 
+import com.auth0.jwt.JWT;
+import com.auth0.jwt.algorithms.Algorithm;
 import com.example.springsecurityjwt.config.auth.PrincipalDetails;
 import com.example.springsecurityjwt.model.User;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -15,6 +17,7 @@ import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
+import java.util.Date;
 
 @RequiredArgsConstructor
 public class JwtAuthenticationFilter extends UsernamePasswordAuthenticationFilter {
@@ -58,7 +61,17 @@ public class JwtAuthenticationFilter extends UsernamePasswordAuthenticationFilte
     protected void successfulAuthentication(HttpServletRequest request, HttpServletResponse response, FilterChain chain, Authentication authResult) throws IOException, ServletException {
         System.out.println("4. 인증 완료");
 
-        super.successfulAuthentication(request, response, chain, authResult);
+        PrincipalDetails principalDetails = (PrincipalDetails) authResult.getPrincipal();
+
+        /* HMAC512 방식으로 JWT 생성 */
+        String jwtToken = JWT.create()
+                .withSubject("test token")
+                .withExpiresAt(new Date(System.currentTimeMillis() + (60000 * 10)))   // 토큰의 만료시간 (토큰이 언제까지 유효할 것인지 결정)
+                .withClaim("id", principalDetails.getUser().getId())   // 비공개 클레임 값
+                .withClaim("username", principalDetails.getUser().getUsername())   // 비공개 클레임 값
+                .sign(Algorithm.HMAC512("qlsdud0604"));   // "qlsdud06604"는 서버만 알고있는 비밀 값 (HMAC512 사용 시 필수로 지정)
+
+        response.addHeader("Authorization", "Bearer " + jwtToken);
     }
 }
 
