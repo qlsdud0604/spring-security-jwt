@@ -16,11 +16,11 @@ public class MyFilter01 implements Filter {
 
         /** POST 요청일 경우에만 동작 */
         if (req.getMethod().equals("POST")) {
-            System.out.println("POST 요청됨");
+            //System.out.println("POST 요청됨");
             String headerAuth = req.getHeader("Authorization");
-            System.out.println(headerAuth);
+            //System.out.println(headerAuth);
 
-            /* header의 내용이 "test token"인 경우 -> 정상 처리*/
+            /* header의 내용이 "test token"인 경우 -> 정상 처리 */
             if (headerAuth.equals("test token")) {
                 filterChain.doFilter(req, res);
             }

@@ -1,7 +1,9 @@
 package com.example.springsecurityjwt.config;
 
 import com.example.springsecurityjwt.config.jwt.JwtAuthenticationFilter;
+import com.example.springsecurityjwt.config.jwt.JwtAuthorizationFilter;
 import com.example.springsecurityjwt.filter.MyFilter01;
+import com.example.springsecurityjwt.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -20,6 +22,8 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
 
     private final CorsFilter corsFilter;
 
+    private final UserRepository userRepository;
+
     @Bean
     public BCryptPasswordEncoder passwordEncoder() {
         return new BCryptPasswordEncoder();
@@ -28,7 +32,7 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
     @Override
     protected void configure(HttpSecurity http) throws Exception {
 
-        http.addFilterBefore(new MyFilter01(), SecurityContextPersistenceFilter.class);   // MyFilter01 필터 등록
+        //http.addFilterBefore(new MyFilter01(), SecurityContextPersistenceFilter.class);   // MyFilter01 필터 등록
 
         http.csrf().disable();
 
@@ -38,6 +42,7 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
                 .formLogin().disable()   // 별도의 로그인 페이지 사용하지 않음
                 .httpBasic().disable()   // 기존의 http 방식 사용하지 않음
                 .addFilter(new JwtAuthenticationFilter(authenticationManager()))   // JwtAuthenticationFilter 필터 등록 (authenticationManager는 필수)
+                .addFilter(new JwtAuthorizationFilter(authenticationManager(), userRepository))   // JwtAuthorizationFilter 필터 등록
                 .authorizeRequests()
                 .antMatchers("/api/v1/user/**").access("hasRole('ROLE_USER') or hasRole('ROLE_MANAGER') or hasRole('ROLE_ADMIN')")
                 .antMatchers("/api/v1/manager/**").access("hasRole('ROLE_MANAGER') or hasRole('ROLE_ADMIN')")
