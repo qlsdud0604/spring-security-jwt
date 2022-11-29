@@ -53,4 +53,4 @@
 </br>
 
 ## 링크
-* Tistory : https://qlsdud0604.tistory.com/category/Spring%20Boot/Spring%20Security%20JWT
+* Tistory : https://qlsdud0604.tistory.com/53
